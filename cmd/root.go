@@ -16,8 +16,10 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -27,6 +29,7 @@ var (
 	cfgFile string
 	ignore  bool
 	config  Config
+	verbose bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -60,6 +63,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
 	rootCmd.PersistentFlags().BoolVarP(&ignore, "ignore", "i", false, "Ignore config files and only use defaults + options (other than config file)")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Verbose output useful for debugging")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -67,38 +71,64 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+	/*
+		todo: redo flow for loading configs
+		0. [x] if flag for ignore and cfg file are both used then exit with error msg
+		1. [ ] if ignore flag set then skip all files and only load defaults
+		2. [ ] if flag for cfg file is used then load it with non-colliding defaults, skip all other
+		4. [ ] if not ignore and not file flag and local file exists then load it
+		3. [ ] else if not ignore and not file flag and $HOME file exists then load it to &config
+		5. [ ] using flags to set individual configs not currently supported
+		6. [ ] using env vars to set/override configs may be possible but not a supported feature yet
+	*/
+	if ignore && cfgFile != "" {
+		fmt.Println("You cannot ignore config files and use a specific file, please choose one option or the other")
+		os.Exit(1)
+	}
 	wd, err := os.Getwd()
+	home := os.Getenv("HOME")
+
 	cobra.CheckErr(err)
 	if !ignore {
 		if cfgFile != "" {
 			// Use config file from the flag.
 			viper.SetConfigFile(cfgFile)
 		} else {
-			// Find home directory.
-			// todo: check if only use local config file?
-			home, err := os.UserHomeDir()
-			cobra.CheckErr(err)
-
-			// Search config in home directory with name ".adr" (without extension).
-			viper.AddConfigPath(home + "/.adr")
-			viper.AddConfigPath(wd)
-
 			viper.SetConfigType(defaultConfigExt)
-			viper.SetConfigName(defaultConfigName)
+			fileName := defaultConfigName + "." + defaultConfigExt
+			wdFile := path.Join(wd, fileName)
+			if _, err := os.Stat(wdFile); errors.Is(err, os.ErrNotExist) {
+				cfgFile = path.Join(home, defaultConfigName, fileName)
+			} else {
+				cfgFile = wdFile
+				config.UsingLocalConfig = true
+			}
+			viper.SetConfigFile(cfgFile)
 		}
 	}
 
+	viper.AutomaticEnv() // read in environment variables that match
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+		if verbose {
+			fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+		}
 		err = viper.Unmarshal(&config)
 		cobra.CheckErr(err)
 	}
-	viper.AutomaticEnv() // read in environment variables that match
+	if config.CfgFile == "" {
+		config.CfgFile = viper.ConfigFileUsed()
+	}
 	if config.WorkingDirectory == "" {
 		config.WorkingDirectory = wd
 	}
-	if config.CfgFile == "" {
-		config.CfgFile = viper.ConfigFileUsed()
+	if config.CfgFileName == "" {
+		config.CfgFileName = defaultConfigName
+	}
+	if config.CfgFileExt == "" {
+		config.CfgFileExt = defaultConfigExt
+	}
+	if config.UserHome == "" {
+		config.UserHome = home
 	}
 }

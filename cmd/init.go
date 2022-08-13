@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -25,9 +26,17 @@ import (
 )
 
 const (
-	defaultRepoDir    = "docs/decisions"
-	defaultConfigExt  = "yaml"
-	defaultConfigName = ".adr"
+	defaultRepoDir          = "docs/decisions"
+	defaultConfigExt        = "yaml"
+	defaultConfigName       = ".adr"
+	uiInitFileExistsNonZero = `A configuration file already exists in the current directory. 
+If you would like to re-initialize your adr repository please delete it first then rerun the init 
+command. Additionally the strict flag was set so the exit code will be set to 1.`
+	uiInitFileExists = `A configuration file already exists in the current directory. If you would 
+like to re-initialize your adr repository please delete it first then rerun the init command.`
+	uiInitInitializing = `Initializing adr repository...`
+	uiInitSuccess      = `Success! You repository has been initialized and is ready to start tracking 
+architecture decision records.`
 )
 
 var (
@@ -35,12 +44,13 @@ var (
 	strict bool
 )
 
-// initCmd represents the init command
-var initCmd = &cobra.Command{
-	Use:     "init [options]",
-	Aliases: []string{"initialize", "start", "manage"},
-	Short:   "Initialize a repository for management by the adr tool",
-	Long: `Init (adr init) will initialize a repository to be managed by
+// NewInitCmd represents the init command
+func NewInitCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "init [options]",
+		Aliases: []string{"initialize", "start", "manage"},
+		Short:   "Initialize a repository for management by the adr tool",
+		Long: `Init (adr init) will initialize a repository to be managed by
 the adr tool. 
 
 It will first check for $HOME/.adr.yaml, and if found it will use applicable
@@ -51,41 +61,47 @@ specified. When there are collisions the priority order of options is:
 1. Command line options
 2. Env vars
 3. $HOME/.adr.yaml`,
-	Run: runInit,
+		Run: runInit,
+	}
+	return cmd
 }
 
 func runInit(cmd *cobra.Command, args []string) {
-	fmt.Println("init called")
-	if config.CfgFile == "" {
-		config.CfgFile = path.Join(config.WorkingDirectory, defaultConfigName+"."+defaultConfigExt)
-	}
-	if localConfigExists(config.CfgFile) {
+	cmd.Println(uiInitInitializing)
+	if config.UsingLocalConfig {
 		// no clobbering, just exit with optional failure status
-		fmt.Printf("file '%s' exists is true\n", config.CfgFile)
 		if strict {
-			fmt.Printf(`The configuration file %s already exists. If you want
-to re-initialize your adr repository please delete it first then rerun the init command.
-Additionally the strict flag was set so the exit code will be set to 1`, config.CfgFile)
+			cmd.Println(uiInitFileExistsNonZero)
 			os.Exit(1)
 		}
-		fmt.Printf(`The configuration file %s already exists. If you want
-to re-initialize your adr repository please delete it first then rerun the init command`, config.CfgFile)
+		cmd.Println(uiInitFileExists)
 		os.Exit(0)
 	}
-	fmt.Printf("just for giggles the file is %s\n", config.CfgFile)
-	fmt.Println("let's continue")
-	config.Repository = &Repository{
-		RelativePath: dir,
+	if config.Repository.Path == "" {
+		config.Repository = &Repository{
+			Path: dir,
+		}
 	}
-	f, err := os.Create(config.CfgFile)
+	f, err := os.Create(path.Join(config.WorkingDirectory, config.CfgFileName+"."+config.CfgFileExt))
 	err = WriteLocalConfig(&config, f)
 	cobra.CheckErr(err)
-	fmt.Printf("Success! The configuration file at %s will be used to manage the repository located at %s\n", config.CfgFile, dir)
+	err = f.Close()
+	cobra.CheckErr(err)
+	err = config.EnsureRepositoryExists()
+	if err != nil {
+		cmd.Println(err)
+	}
+	cmd.Println(uiInitSuccess)
 }
 
-func localConfigExists(f string) bool {
-	_, err := os.Stat(f)
-	return err == nil
+func (c *Config) EnsureRepositoryExists() error {
+	if _, err := os.Stat(c.Repository.Path); errors.Is(err, os.ErrNotExist) {
+		err = os.MkdirAll(path.Join(c.WorkingDirectory, c.Repository.Path), os.ModePerm)
+		if err != nil {
+			return errors.New(fmt.Sprintf("warning: unable to create the repository directory %s. You will likely need to create it manually", path.Join(c.WorkingDirectory, c.Repository.Path)))
+		}
+	}
+	return nil
 }
 
 func WriteLocalConfig(c *Config, w io.Writer) error {
@@ -98,6 +114,7 @@ func WriteLocalConfig(c *Config, w io.Writer) error {
 }
 
 func init() {
+	initCmd := NewInitCmd()
 	rootCmd.AddCommand(initCmd)
 
 	// Here you will define your flags and configuration settings.
