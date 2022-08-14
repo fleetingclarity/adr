@@ -61,8 +61,6 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
-	rootCmd.PersistentFlags().BoolVarP(&ignore, "ignore", "i", false, "Ignore config files and only use defaults + options (other than config file)")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Verbose output useful for debugging")
 
 	// Cobra also supports local flags, which will only run
@@ -73,8 +71,7 @@ func init() {
 func initConfig() {
 	/*
 		todo: redo flow for loading configs
-		0. [x] if flag for ignore and cfg file are both used then exit with error msg
-		1. [ ] if ignore flag set then skip all files and only load defaults
+		1. [x] if ignore flag set then skip all files and only load defaults
 		2. [ ] if flag for cfg file is used then load it with non-colliding defaults, skip all other
 		4. [ ] if not ignore and not file flag and local file exists then load it
 		3. [ ] else if not ignore and not file flag and $HOME file exists then load it to &config
@@ -82,10 +79,6 @@ func initConfig() {
 		6. [ ] using env vars to set/override configs may be possible but not a supported feature yet
 	*/
 	config = &Config{} // necessary for test suites, hoping this won't affect production but idk cobra/viper very well
-	if ignore && cfgFile != "" {
-		fmt.Println("You cannot ignore config files and use a specific file, please choose one option or the other")
-		os.Exit(1)
-	}
 	wd, err := os.Getwd()
 	home := os.Getenv("HOME")
 
