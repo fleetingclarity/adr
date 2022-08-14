@@ -16,8 +16,6 @@ limitations under the License.
 package cmd
 
 import (
-	"errors"
-	"fmt"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 	"io"
@@ -87,16 +85,6 @@ func runInit(cmd *cobra.Command, args []string) {
 		// no clobbering, just print and allow exit
 		cmd.Println(uiInitFileExists)
 	}
-}
-
-func (c *Config) EnsureRepositoryExists() error {
-	if _, err := os.Stat(c.Repository.Path); errors.Is(err, os.ErrNotExist) {
-		err = os.MkdirAll(path.Join(c.WorkingDirectory, c.Repository.Path), os.ModePerm)
-		if err != nil {
-			return errors.New(fmt.Sprintf("warning: unable to create the repository directory %s. You will likely need to create it manually", path.Join(c.WorkingDirectory, c.Repository.Path)))
-		}
-	}
-	return nil
 }
 
 func WriteLocalConfig(c *Config, w io.Writer) error {
