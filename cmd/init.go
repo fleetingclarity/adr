@@ -40,8 +40,7 @@ architecture decision records.`
 )
 
 var (
-	dir    string
-	strict bool
+	dir string
 )
 
 // NewInitCmd represents the init command
@@ -68,30 +67,26 @@ specified. When there are collisions the priority order of options is:
 
 func runInit(cmd *cobra.Command, args []string) {
 	cmd.Println(uiInitInitializing)
-	if config.UsingLocalConfig {
-		// no clobbering, just exit with optional failure status
-		if strict {
-			cmd.Println(uiInitFileExistsNonZero)
-			os.Exit(1)
+	if !config.UsingLocalConfig {
+		if config.Repository.Path == "" {
+			config.Repository = &Repository{
+				Path: dir,
+			}
 		}
+		f, err := os.Create(path.Join(config.WorkingDirectory, config.CfgFileName+"."+config.CfgFileExt))
+		err = WriteLocalConfig(config, f)
+		cobra.CheckErr(err)
+		err = f.Close()
+		cobra.CheckErr(err)
+		err = config.EnsureRepositoryExists()
+		if err != nil {
+			cmd.Println(err)
+		}
+		cmd.Println(uiInitSuccess)
+	} else {
+		// no clobbering, just print and allow exit
 		cmd.Println(uiInitFileExists)
-		os.Exit(0)
 	}
-	if config.Repository.Path == "" {
-		config.Repository = &Repository{
-			Path: dir,
-		}
-	}
-	f, err := os.Create(path.Join(config.WorkingDirectory, config.CfgFileName+"."+config.CfgFileExt))
-	err = WriteLocalConfig(&config, f)
-	cobra.CheckErr(err)
-	err = f.Close()
-	cobra.CheckErr(err)
-	err = config.EnsureRepositoryExists()
-	if err != nil {
-		cmd.Println(err)
-	}
-	cmd.Println(uiInitSuccess)
 }
 
 func (c *Config) EnsureRepositoryExists() error {
@@ -126,5 +121,4 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	initCmd.Flags().StringVarP(&dir, "repository", "r", defaultRepoDir, "Change the path that adrs will be stored in")
-	initCmd.Flags().BoolVarP(&strict, "strict", "s", false, "Used for scripting to cause failure if we're already initialized")
 }

@@ -28,7 +28,7 @@ import (
 var (
 	cfgFile string
 	ignore  bool
-	config  Config
+	config  *Config
 	verbose bool
 )
 
@@ -81,6 +81,7 @@ func initConfig() {
 		5. [ ] using flags to set individual configs not currently supported
 		6. [ ] using env vars to set/override configs may be possible but not a supported feature yet
 	*/
+	config = &Config{} // necessary for test suites, hoping this won't affect production but idk cobra/viper very well
 	if ignore && cfgFile != "" {
 		fmt.Println("You cannot ignore config files and use a specific file, please choose one option or the other")
 		os.Exit(1)
@@ -97,8 +98,14 @@ func initConfig() {
 			viper.SetConfigType(defaultConfigExt)
 			fileName := defaultConfigName + "." + defaultConfigExt
 			wdFile := path.Join(wd, fileName)
+			homeFile := path.Join(home, defaultConfigName, fileName)
+			// always use local if it exists, then try to use home
 			if _, err := os.Stat(wdFile); errors.Is(err, os.ErrNotExist) {
-				cfgFile = path.Join(home, defaultConfigName, fileName)
+				if _, err = os.Stat(homeFile); errors.Is(err, os.ErrNotExist) {
+					cfgFile = ""
+				} else {
+					cfgFile = homeFile
+				}
 			} else {
 				cfgFile = wdFile
 				config.UsingLocalConfig = true
