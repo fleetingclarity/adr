@@ -80,15 +80,26 @@ func Test_InitWithHomeConfig(t *testing.T) {
 	cmd.SetErr(cmdOutput)
 	err = cmd.Execute()
 	require.NoError(t, err, "error during cmd execution")
-	output := cmdOutput.String()
-	expectedOutput := uiInitInitializing + "\n" + uiInitSuccess + "\n"
-	// todo: this should be a separate test for ui
-	assert.Equal(t, expectedOutput, output, "expected to break if more output is added to init cmd")
 	createdFileContents, err := os.ReadFile(path.Join(workDir, configFile))
 	require.NoError(t, err, "error reading the created config file in the test working directory")
 	assert.Equal(t, expectedContent, string(createdFileContents), "should match")
 	err = os.Remove(path.Join(testHomeDir, defaultConfigName, configFile))
 	err = os.Remove(path.Join(workDir, configFile))
+}
+
+// until I get a better understanding of cobra/viper let's use this to guard our user interface
+func Test_InitHappyPathOutput(t *testing.T) {
+	startDir, workDir, testHomeDir, _ := setup()
+	defer cleanup(startDir, workDir, testHomeDir)
+	cmdOutput := &bytes.Buffer{}
+	cmd := NewInitCmd()
+	cmd.SetOut(cmdOutput)
+	cmd.SetErr(cmdOutput)
+	err := cmd.Execute()
+	require.NoError(t, err, "error during cmd execution")
+	output := cmdOutput.String()
+	expectedOutput := uiInitInitializing + "\n" + uiInitSuccess + "\n"
+	assert.Equal(t, expectedOutput, output, "expected to break if more output is added to init cmd")
 }
 
 // test using defaults when no global config in home directory
