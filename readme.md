@@ -7,8 +7,8 @@ There are 3 broad use cases:
 3. Generate reports
 
 There are 3 location-based scenarios where you may want to manage ADRs:
-1. In some software project. This is the default that ADRs were intended for. The default location is the `docs/decisions` subdirectories under the root of your project.
-2. In some centralized place where the scope is greater than a specific project. For example, in traditional organizations it is typical to have many projects/applications falling under the purview of one (or a small group of) architect. In this case it can be desirable to have a central decision repository that does not contain code or other artifacts, so the default `docs/decisions` subdirectory structure makes less sense and should be configurable.
+1. In some software project. This is the default that ADRs were intended for. The default location is the `docs/decisions` subdirectories under the root of your project. This scenario is our default.
+2. In some centralized place where the scope is greater than a specific project. For example, in traditional organizations it is typical to have many projects/applications falling under the purview of one architect (or a small group). In this case it can be desirable to have a central decision repository that does not contain code or other artifacts, so the default `docs/decisions` subdirectory structure makes less sense and should be configurable.
 3. In some software project but the `docs/decisions` default will not work or does not make sense for some reason. Another scenario indicating that the storage location should be configurable.
 
 ## Features
@@ -19,6 +19,7 @@ There are 3 location-based scenarios where you may want to manage ADRs:
 - [ ] Update the status of an existing ADR
 - [ ] Configure custom directory where ADRs are maintained
 - [ ] Configure custom statuses for your ADRs
+- [ ] Customizable ADR format with Nygard by default
 - [ ] Store configuration per ADR repository (directory)
 - [ ] Lint ADRs
 
