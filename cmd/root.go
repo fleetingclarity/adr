@@ -27,7 +27,6 @@ import (
 
 var (
 	cfgFile string
-	ignore  bool
 	config  *Config
 	verbose bool
 )
@@ -69,43 +68,27 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	/*
-		todo: redo flow for loading configs
-		1. [x] if ignore flag set then skip all files and only load defaults
-		2. [ ] if flag for cfg file is used then load it with non-colliding defaults, skip all other
-		4. [ ] if not ignore and not file flag and local file exists then load it
-		3. [ ] else if not ignore and not file flag and $HOME file exists then load it to &config
-		5. [ ] using flags to set individual configs not currently supported
-		6. [ ] using env vars to set/override configs may be possible but not a supported feature yet
-	*/
 	config = &Config{} // necessary for test suites, hoping this won't affect production but idk cobra/viper very well
 	wd, err := os.Getwd()
 	home := os.Getenv("HOME")
 
 	cobra.CheckErr(err)
-	if !ignore {
-		if cfgFile != "" {
-			// Use config file from the flag.
-			viper.SetConfigFile(cfgFile)
+	viper.SetConfigType(defaultConfigExt)
+	fileName := defaultConfigName + "." + defaultConfigExt
+	wdFile := path.Join(wd, fileName)
+	homeFile := path.Join(home, defaultConfigName, fileName)
+	// always use local if it exists, then try to use home
+	if _, err := os.Stat(wdFile); errors.Is(err, os.ErrNotExist) {
+		if _, err = os.Stat(homeFile); errors.Is(err, os.ErrNotExist) {
+			cfgFile = ""
 		} else {
-			viper.SetConfigType(defaultConfigExt)
-			fileName := defaultConfigName + "." + defaultConfigExt
-			wdFile := path.Join(wd, fileName)
-			homeFile := path.Join(home, defaultConfigName, fileName)
-			// always use local if it exists, then try to use home
-			if _, err := os.Stat(wdFile); errors.Is(err, os.ErrNotExist) {
-				if _, err = os.Stat(homeFile); errors.Is(err, os.ErrNotExist) {
-					cfgFile = ""
-				} else {
-					cfgFile = homeFile
-				}
-			} else {
-				cfgFile = wdFile
-				config.UsingLocalConfig = true
-			}
-			viper.SetConfigFile(cfgFile)
+			cfgFile = homeFile
 		}
+	} else {
+		cfgFile = wdFile
+		config.UsingLocalConfig = true
 	}
+	viper.SetConfigFile(cfgFile)
 
 	viper.AutomaticEnv() // read in environment variables that match
 	// If a config file is found, read it in.
