@@ -141,5 +141,3 @@ func Test_InitNoChangesWhenLocalConfigExists(t *testing.T) {
 	assert.Equal(t, expectedContent, string(contentAfterRun), "should not have been modified")
 	os.Remove(path.Join(workDir, configFile))
 }
-
-// ?todo: test flags and env vars?
