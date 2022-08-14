@@ -24,13 +24,10 @@ import (
 )
 
 const (
-	defaultRepoDir          = "docs/decisions"
-	defaultConfigExt        = "yaml"
-	defaultConfigName       = ".adr"
-	uiInitFileExistsNonZero = `A configuration file already exists in the current directory. 
-If you would like to re-initialize your adr repository please delete it first then rerun the init 
-command. Additionally the strict flag was set so the exit code will be set to 1.`
-	uiInitFileExists = `A configuration file already exists in the current directory. If you would 
+	defaultRepoDir    = "docs/decisions"
+	defaultConfigExt  = "yaml"
+	defaultConfigName = ".adr"
+	uiInitFileExists  = `A configuration file already exists in the current directory. If you would 
 like to re-initialize your adr repository please delete it first then rerun the init command.`
 	uiInitInitializing = `Initializing adr repository...`
 	uiInitSuccess      = `Success! You repository has been initialized and is ready to start tracking 
