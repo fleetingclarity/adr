@@ -68,7 +68,7 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	config = &Config{} // necessary for test suites, hoping this won't affect production but idk cobra/viper very well
+	config = &Config{} // necessary for test suites, hoping this won't affect production but IDK cobra/viper very well
 	wd, err := os.Getwd()
 	home := os.Getenv("HOME")
 
@@ -94,7 +94,7 @@ func initConfig() {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		if verbose {
-			fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+			_, _ = fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 		}
 		err = viper.Unmarshal(&config)
 		cobra.CheckErr(err)
