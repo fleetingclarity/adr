@@ -67,7 +67,7 @@ func Test_Init(t *testing.T) {
 	}()
 	configFile := defaultConfigName + "." + defaultConfigExt
 
-	// test pick up content from base config in home directory
+	// test pick up content from base config in home directory and use it to initialize a local repo
 	t.Run("initialize with settings from base config", func(t *testing.T) {
 		// create a base config file
 		expectedContent := "repository:\n    path: .\n"
@@ -91,7 +91,20 @@ func Test_Init(t *testing.T) {
 		require.NoError(t, err, "error reading the created config file in the test working directory")
 		assert.Equal(t, expectedContent, string(createdFileContents), "should match")
 	})
-	// todo: test using defaults when no global config in home directory
+	// test using defaults when no global config in home directory
+	t.Run("initialize with defaults", func(t *testing.T) {
+		expectedContent := "repository:\n    path: " + defaultRepoDir + "\n"
+		cmdOutput := &bytes.Buffer{}
+		cmd := NewInitCmd()
+		cmd.SetOut(cmdOutput)
+		cmd.SetErr(cmdOutput)
+		err = cmd.Execute()
+		require.NoError(t, err, "error during command execution")
+		createdFileContents, err := os.ReadFile(path.Join(workDir, configFile))
+		require.NoError(t, err, "error reading the contents of the created file")
+		assert.Equal(t, expectedContent, string(createdFileContents), "should have a file with default contents")
+	})
+
 	// todo: test no file modification when local config exists
 	// todo: test no file modification and exit status is non-zero when local config exists
 	// ?todo: test flags and env vars?

@@ -131,4 +131,9 @@ func initConfig() {
 	if config.UserHome == "" {
 		config.UserHome = home
 	}
+	if config.Repository == nil {
+		config.Repository = &Repository{
+			Path: "",
+		}
+	}
 }
