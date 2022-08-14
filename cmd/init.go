@@ -108,5 +108,5 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	initCmd.Flags().StringVarP(&dir, "repository", "r", defaultRepoDir, "Change the path that adrs will be stored in")
+	initCmd.Flags().StringVarP(&dir, "repository", "r", defaultRepoDir, "Change the path that ADRs will be stored in")
 }
