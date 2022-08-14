@@ -66,7 +66,7 @@ specified. When there are collisions the priority order of options is:
 func runInit(cmd *cobra.Command, args []string) {
 	cmd.Println(uiInitInitializing)
 	if !config.UsingLocalConfig {
-		if config.Repository.Path == "" {
+		if config.Repository.Path == "" || cmd.Flags().Changed("repository") { // precedence to flags
 			config.Repository = &Repository{
 				Path: dir,
 			}

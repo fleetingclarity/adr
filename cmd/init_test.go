@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"os"
@@ -140,4 +141,26 @@ func Test_InitNoChangesWhenLocalConfigExists(t *testing.T) {
 	require.NoError(t, err, "error reading the contents of the workdir config file")
 	assert.Equal(t, expectedContent, string(contentAfterRun), "should not have been modified")
 	os.Remove(path.Join(workDir, configFile))
+}
+
+func Test_InitWithRepoFlagOverridesHomeSetting(t *testing.T) {
+	startDir, workDir, testHomeDir, configFile := setup()
+	defer cleanup(startDir, workDir, testHomeDir)
+	homeConfigContent := "repository:\n    path: somepath\n"
+	err := writeAndClose(path.Join(testHomeDir, defaultConfigName, configFile), homeConfigContent)
+	defer os.Remove(path.Join(testHomeDir, defaultConfigName, configFile))
+	require.NoError(t, err, "error writing a home config")
+	expectedRepoDir := "some/other/dir"
+	cmdOutput := &bytes.Buffer{}
+	cmd := rootCmd
+	cmd.SetArgs([]string{"init", fmt.Sprintf("--repository=%s", expectedRepoDir)})
+	cmd.SetOut(cmdOutput)
+	cmd.SetErr(cmdOutput)
+	err = cmd.Execute()
+	require.NoError(t, err, "error during command execution")
+	contentAfterRun, err := os.ReadFile(path.Join(workDir, configFile))
+	require.NoError(t, err, "error reading the config file")
+	expectedContent := "repository:\n    path: " + expectedRepoDir + "\n"
+	assert.Equal(t, expectedContent, string(contentAfterRun))
+	assert.DirExists(t, path.Join(workDir, expectedRepoDir))
 }
