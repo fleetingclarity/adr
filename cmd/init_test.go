@@ -12,26 +12,26 @@ import (
 
 func Test_WriteLocalConfig(t *testing.T) {
 	type test struct {
-		name           string
-		in             *Config
-		expected       string
-		shouldNotMatch bool
+		name             string
+		in               *Config
+		expected         string
+		shouldNotContain bool
 	}
 	tests := []test{
-		{name: "happy . for local", in: &Config{Repository: &Repository{Path: "."}}, expected: "repository:\n    path: .\n", shouldNotMatch: false},
-		{name: "sad . for local", in: &Config{Repository: &Repository{Path: "."}}, expected: "repository:\n    path:.\n", shouldNotMatch: true},
-		{name: "happy anything", in: &Config{Repository: &Repository{Path: "anything"}}, expected: "repository:\n    path: anything\n", shouldNotMatch: false},
-		{name: "sad anything", in: &Config{Repository: &Repository{Path: "anything"}}, expected: "repository:\n    path:anything\n", shouldNotMatch: true},
+		{name: "happy . for local", in: &Config{Repository: &Repository{Path: "."}}, expected: "repository:\n    path: .\n", shouldNotContain: false},
+		{name: "sad . for local", in: &Config{Repository: &Repository{Path: "."}}, expected: "repository:\n    path:.\n", shouldNotContain: true},
+		{name: "happy anything", in: &Config{Repository: &Repository{Path: "anything"}}, expected: "repository:\n    path: anything\n", shouldNotContain: false},
+		{name: "sad anything", in: &Config{Repository: &Repository{Path: "anything"}}, expected: "repository:\n    path:anything\n", shouldNotContain: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b := &bytes.Buffer{}
 			err := WriteLocalConfig(tt.in, b)
 			assert.NoError(t, err, "No test in this table should generate errors")
-			if tt.shouldNotMatch {
-				assert.NotEqual(t, string(b.Bytes()), tt.expected)
+			if tt.shouldNotContain {
+				assert.NotContains(t, string(b.Bytes()), tt.expected)
 			} else {
-				assert.Equal(t, string(b.Bytes()), tt.expected)
+				assert.Contains(t, string(b.Bytes()), tt.expected)
 			}
 		})
 	}
@@ -83,7 +83,7 @@ func Test_InitWithHomeConfig(t *testing.T) {
 	require.NoError(t, err, "error during cmd execution")
 	createdFileContents, err := os.ReadFile(path.Join(workDir, configFile))
 	require.NoError(t, err, "error reading the created config file in the test working directory")
-	assert.Equal(t, expectedContent, string(createdFileContents), "should match")
+	assert.Contains(t, string(createdFileContents), expectedContent, "should match")
 	err = os.Remove(path.Join(testHomeDir, defaultConfigName, configFile))
 	err = os.Remove(path.Join(workDir, configFile))
 }
@@ -116,7 +116,7 @@ func Test_InitWithDefaults(t *testing.T) {
 	require.NoError(t, err, "error during command execution")
 	createdFileContents, err := os.ReadFile(path.Join(workDir, configFile))
 	require.NoError(t, err, "error reading the contents of the created file")
-	assert.Equal(t, expectedContent, string(createdFileContents), "should have a file with default contents")
+	assert.Contains(t, string(createdFileContents), expectedContent, "should have a file with default contents")
 	err = os.RemoveAll(path.Join(workDir, "docs"))
 }
 
@@ -161,6 +161,6 @@ func Test_InitWithRepoFlagOverridesHomeSetting(t *testing.T) {
 	contentAfterRun, err := os.ReadFile(path.Join(workDir, configFile))
 	require.NoError(t, err, "error reading the config file")
 	expectedContent := "repository:\n    path: " + expectedRepoDir + "\n"
-	assert.Equal(t, expectedContent, string(contentAfterRun))
+	assert.Contains(t, string(contentAfterRun), expectedContent)
 	assert.DirExists(t, path.Join(workDir, expectedRepoDir))
 }
