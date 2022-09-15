@@ -26,7 +26,7 @@ func Test_WriteLocalConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			b := &bytes.Buffer{}
-			err := WriteLocalConfig(tt.in, b)
+			err := tt.in.Write(b)
 			assert.NoError(t, err, "No test in this table should generate errors")
 			if tt.shouldNotContain {
 				assert.NotContains(t, string(b.Bytes()), tt.expected)

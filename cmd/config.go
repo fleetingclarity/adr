@@ -3,6 +3,8 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"gopkg.in/yaml.v3"
+	"io"
 	"os"
 	"path"
 )
@@ -15,6 +17,7 @@ type Config struct {
 	UserHome         string `yaml:"-"`
 	UsingLocalConfig bool   `yaml:"-"`
 	*Repository
+	*ADRConfig
 }
 
 func (c *Config) EnsureRepositoryExists() error {
@@ -25,4 +28,13 @@ func (c *Config) EnsureRepositoryExists() error {
 		}
 	}
 	return nil
+}
+
+func (c *Config) Write(w io.Writer) error {
+	o, err := yaml.Marshal(c)
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(o)
+	return err
 }

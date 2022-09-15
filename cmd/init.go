@@ -17,8 +17,6 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
-	"io"
 	"os"
 	"path"
 )
@@ -32,6 +30,23 @@ like to re-initialize your adr repository please delete it first then rerun the 
 	uiInitInitializing = `Initializing adr repository...`
 	uiInitSuccess      = `Success! You repository has been initialized and is ready to start tracking 
 architecture decision records.`
+	defaultTitleTemplate = "NNNN-{{ .Title }}.md"
+	defaultBodyTemplate  = `# {{ .Title }}
+Date: {{ .Date }}
+
+## Status
+{{ .Status }}
+
+## Context
+{{ .Context }}
+
+## Decision
+{{ .Decision }}
+
+## Consequences
+{{ .Consequences }}
+
+`
 )
 
 var (
@@ -69,7 +84,7 @@ func runInit(cmd *cobra.Command, args []string) {
 			}
 		}
 		f, err := os.Create(path.Join(config.WorkingDirectory, config.CfgFileName+"."+config.CfgFileExt))
-		err = WriteLocalConfig(config, f)
+		err = config.Write(f)
 		cobra.CheckErr(err)
 		err = f.Close()
 		cobra.CheckErr(err)
@@ -82,15 +97,6 @@ func runInit(cmd *cobra.Command, args []string) {
 		// no clobbering, just print and allow exit
 		cmd.Println(uiInitFileExists)
 	}
-}
-
-func WriteLocalConfig(c *Config, w io.Writer) error {
-	o, err := yaml.Marshal(c)
-	if err != nil {
-		return err
-	}
-	_, err = w.Write(o)
-	return err
 }
 
 func init() {
