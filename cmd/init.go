@@ -16,17 +16,14 @@ limitations under the License.
 package cmd
 
 import (
+	conf "github.com/fleetingclarity/adr/config"
 	"github.com/spf13/cobra"
 	"os"
 	"path"
 )
 
 const (
-	defaultRepoDir    = "docs/decisions"
-	defaultConfigExt  = "yaml"
-	defaultConfigName = ".adr"
-	uiInitFileExists  = `A configuration file already exists in the current directory. If you would 
-like to re-initialize your adr repository please delete it first then rerun the init command.`
+	uiInitFileExists   = `A configuration file already exists in the current directory. If you would like to re-initialize your adr repository please delete it first then rerun the init command.`
 	uiInitInitializing = `Initializing adr repository...`
 	uiInitSuccess      = `Success! You repository has been initialized and is ready to start tracking 
 architecture decision records.`
@@ -77,9 +74,11 @@ specified. When there are collisions the priority order of options is:
 
 func runInit(cmd *cobra.Command, args []string) {
 	cmd.Println(uiInitInitializing)
-	if !config.UsingLocalConfig {
-		if config.Repository.Path == "" || cmd.Flags().Changed("repository") { // precedence to flags
-			config.Repository = &Repository{
+	m, err := config.Managed()
+	cobra.CheckErr(err)
+	if !m {
+		if cmd.Flags().Changed("repository") { // precedence to flags
+			config.Repository = &conf.Repository{
 				Path: dir,
 			}
 		}
@@ -111,5 +110,5 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	initCmd.Flags().StringVarP(&dir, "repository", "r", defaultRepoDir, "Change the path that ADRs will be stored in")
+	initCmd.Flags().StringVarP(&dir, "repository", "r", conf.DefaultRepositoryDir, "Change the path that ADRs will be stored in")
 }

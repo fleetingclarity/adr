@@ -102,3 +102,6 @@ _deps
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+### Our specifics
+# our binary when we run go build
+adr

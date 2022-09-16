@@ -18,6 +18,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	conf "github.com/fleetingclarity/adr/config"
 	"os"
 	"path"
 
@@ -27,7 +28,7 @@ import (
 
 var (
 	cfgFile string
-	config  *Config
+	config  *conf.Config
 	verbose bool
 )
 
@@ -68,25 +69,17 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	config = &Config{} // necessary for test suites, hoping this won't affect production but IDK cobra/viper very well
+	config = &conf.Config{} // necessary for test suites, hoping this won't affect production but IDK cobra/viper very well
 	wd, err := os.Getwd()
-	home := os.Getenv("HOME")
-
 	cobra.CheckErr(err)
-	viper.SetConfigType(defaultConfigExt)
-	fileName := defaultConfigName + "." + defaultConfigExt
+
+	viper.SetConfigType(conf.DefaultConfigExt)
+	fileName := conf.DefaultConfigName + "." + conf.DefaultConfigExt
 	wdFile := path.Join(wd, fileName)
-	homeFile := path.Join(home, defaultConfigName, fileName)
-	// always use local if it exists, then try to use home
 	if _, err := os.Stat(wdFile); errors.Is(err, os.ErrNotExist) {
-		if _, err = os.Stat(homeFile); errors.Is(err, os.ErrNotExist) {
-			cfgFile = ""
-		} else {
-			cfgFile = homeFile
-		}
+		cfgFile = ""
 	} else {
 		cfgFile = wdFile
-		config.UsingLocalConfig = true
 	}
 	viper.SetConfigFile(cfgFile)
 
@@ -98,25 +91,7 @@ func initConfig() {
 		}
 		err = viper.Unmarshal(&config)
 		cobra.CheckErr(err)
-	}
-	if config.CfgFile == "" {
-		config.CfgFile = viper.ConfigFileUsed()
-	}
-	if config.WorkingDirectory == "" {
-		config.WorkingDirectory = wd
-	}
-	if config.CfgFileName == "" {
-		config.CfgFileName = defaultConfigName
-	}
-	if config.CfgFileExt == "" {
-		config.CfgFileExt = defaultConfigExt
-	}
-	if config.UserHome == "" {
-		config.UserHome = home
-	}
-	if config.Repository == nil {
-		config.Repository = &Repository{
-			Path: "",
-		}
+	} else { // otherwise use default values
+		config = conf.NewDefaultConfig()
 	}
 }
