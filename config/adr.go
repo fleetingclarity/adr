@@ -41,6 +41,7 @@ func (a *ADR) New(repoDir string, values map[string]any) error {
 	// 3. use title template to create new file
 	tt, err := t.Parse(a.TitleTemplate)
 	f, err := a.titledFile(tt, repoDir, values)
+	defer f.Close()
 	if err != nil {
 		return err
 	}
@@ -53,7 +54,7 @@ func (a *ADR) New(repoDir string, values map[string]any) error {
 	return nil
 }
 
-func (a *ADR) titledFile(t *template.Template, repoDir string, v map[string]any) (io.Writer, error) {
+func (a *ADR) titledFile(t *template.Template, repoDir string, v map[string]any) (io.WriteCloser, error) {
 	pathBuffer := bytes.NewBufferString("")
 	err := t.Execute(pathBuffer, v)
 	if err != nil {
