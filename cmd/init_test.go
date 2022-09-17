@@ -10,33 +10,6 @@ import (
 	"testing"
 )
 
-func Test_WriteLocalConfig(t *testing.T) {
-	type test struct {
-		name             string
-		in               *conf.Config
-		expected         string
-		shouldNotContain bool
-	}
-	tests := []test{
-		{name: "happy . for local", in: &conf.Config{Repository: &conf.Repository{Path: "."}}, expected: "repository:\n    path: .\n", shouldNotContain: false},
-		{name: "sad . for local", in: &conf.Config{Repository: &conf.Repository{Path: "."}}, expected: "repository:\n    path:.\n", shouldNotContain: true},
-		{name: "happy anything", in: &conf.Config{Repository: &conf.Repository{Path: "anything"}}, expected: "repository:\n    path: anything\n", shouldNotContain: false},
-		{name: "sad anything", in: &conf.Config{Repository: &conf.Repository{Path: "anything"}}, expected: "repository:\n    path:anything\n", shouldNotContain: true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			b := &bytes.Buffer{}
-			err := tt.in.Write(b)
-			assert.NoError(t, err, "No test in this table should generate errors")
-			if tt.shouldNotContain {
-				assert.NotContains(t, string(b.Bytes()), tt.expected)
-			} else {
-				assert.Contains(t, string(b.Bytes()), tt.expected)
-			}
-		})
-	}
-}
-
 // writeAndClose is a test helper for creating temp files
 func writeAndClose(p string, c string) error {
 	f, err := os.Create(p)
