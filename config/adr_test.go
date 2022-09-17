@@ -71,7 +71,7 @@ func Test_NumberIdentification(t *testing.T) {
 				err = writeAndClose(p, fmt.Sprintf("test file %d\n", i))
 				assert.NoError(t, err)
 			}
-			v := make(map[string]any)
+			v := make(map[string]string)
 			v["Title"] = "test-title"
 			cut := NewDefaultConfig().ADR
 			err = cut.New(path.Join(workDir, DefaultRepositoryDir), v)
@@ -88,6 +88,29 @@ func Test_NumberIdentification(t *testing.T) {
 			})
 			assert.Contains(t, files, tt.expected)
 			cleanup(startDir, workDir)
+		})
+	}
+}
+
+func Test_TitleSanitizing(t *testing.T) {
+	type test struct {
+		name     string
+		in       string
+		expected string
+		msg      string
+	}
+	tests := []test{
+		{name: "Handle punctuation", in: "!some thing & with pu,nctuation", expected: "some-thing--with-punctuation", msg: "Expect two dashes between thing and with"},
+		{name: "Handle uppercase", in: "UPPERCASE", expected: "uppercase", msg: "Simple upper to lower should never go wrong"},
+		{name: "Handle dashes", in: "title-with-dashes", expected: "title-with-dashes", msg: "Not expected to do anything to dashes"},
+		{name: "All cases", in: "*tItl,e-WitH mix!@", expected: "title-with-mix", msg: "Nobody would ever do this right?"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cut := NewDefaultConfig()
+			actual := cut.Sanitize(tt.in)
+			assert.Equal(t, tt.expected, actual, tt.msg)
 		})
 	}
 }

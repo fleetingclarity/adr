@@ -17,15 +17,15 @@ There are 3 location-based scenarios where you may want to manage ADRs:
 
 ## Planned Features
 
-- [ ] Create a new ADR based on the Nygard format
+- [x] Create a new ADR based on the Nygard format
+- [x] Store configuration per ADR repository
 - [ ] Link an ADR to another ADR within the same repository
 - [ ] Supersede an existing ADR with another ADR
 - [ ] Update the status of an existing ADR
-- [ ] Configure custom directory where ADRs are maintained
+- [x] Configure custom directory where ADRs are maintained
 
 ## Potential Future Features
-- [ ] Customizable ADR format with Nygard by default
+- [ ] Customizable ADR format with Nygard by default (partial due to config file)
 - [ ] Configure custom statuses for your ADRs
-- [ ] Store configuration per ADR repository
 - [ ] Lint ADRs
 - [ ] Default global init values (used when initializing the repo)

@@ -27,23 +27,6 @@ const (
 	uiInitInitializing = `Initializing adr repository...`
 	uiInitSuccess      = `Success! You repository has been initialized and is ready to start tracking 
 architecture decision records.`
-	defaultTitleTemplate = "NNNN-{{ .Title }}.md"
-	defaultBodyTemplate  = `# {{ .Title }}
-Date: {{ .Date }}
-
-## Status
-{{ .Status }}
-
-## Context
-{{ .Context }}
-
-## Decision
-{{ .Decision }}
-
-## Consequences
-{{ .Consequences }}
-
-`
 )
 
 var (

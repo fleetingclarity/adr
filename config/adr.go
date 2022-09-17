@@ -10,8 +10,10 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 	"text/template"
 	"time"
+	"unicode"
 )
 
 type ADR struct {
@@ -27,13 +29,14 @@ func (a *ADR) Name() string {
 
 // New will create a new ADR using the in-memory configuration. It will determine the
 // next number for the new ADR and write a new file to repoDir
-func (a *ADR) New(repoDir string, values map[string]any) error {
+func (a *ADR) New(repoDir string, values map[string]string) error {
 	// 1. determine next number and pad with 0s
 	n, err := a.next(repoDir)
 	if err != nil {
 		return err
 	}
 	ns := fmt.Sprintf("%03d", n)
+	values["Title"] = a.Sanitize(values["Title"])
 	values["Number"] = ns
 	values["Date"] = fmt.Sprintf("%v-%v-%v", time.Now().Year(), time.Now().Month(), time.Now().Day())
 	// 2. create go template
@@ -54,7 +57,26 @@ func (a *ADR) New(repoDir string, values map[string]any) error {
 	return nil
 }
 
-func (a *ADR) titledFile(t *template.Template, repoDir string, v map[string]any) (io.WriteCloser, error) {
+// Sanitize ensures that the given string matches Title expectations (e.g. lowercase, no spaces, etc)
+func (a *ADR) Sanitize(title string) string {
+	if title == "" {
+		return "no-title-given"
+	}
+	return strings.Map(func(r rune) rune {
+		if unicode.IsSpace(r) {
+			return '-'
+		}
+		if unicode.IsUpper(r) {
+			return unicode.ToLower(r)
+		}
+		if r == '-' || unicode.IsDigit(r) || unicode.IsLower(r) {
+			return r
+		}
+		return -1
+	}, title)
+}
+
+func (a *ADR) titledFile(t *template.Template, repoDir string, v map[string]string) (io.WriteCloser, error) {
 	pathBuffer := bytes.NewBufferString("")
 	err := t.Execute(pathBuffer, v)
 	if err != nil {
@@ -108,16 +130,16 @@ const (
 Date: {{ .Date }}
 
 ## Status
-Placeholder value
+Proposed
 
 ## Context
-Placeholder value
+Describe the environment. What forces are exerting pressure on this decision? What are you trying to accomplish?
 
 ## Decision
-Placeholder value
+Describe the decision but don't be too verbose. 1 or 2 pages of the details that matter. The audience is future team members.
 
 ## Consequences
-Placeholder value
+Describe the effect of the decision. What are you trading off? What is good, bad, or even deferred to another day?
 
 `
 )
