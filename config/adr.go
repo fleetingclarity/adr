@@ -1,8 +1,12 @@
 package config
 
 import (
+	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"io"
 	"os"
 	"path"
@@ -122,6 +126,73 @@ func (a *ADR) next(dir string) (int, error) {
 	} else {
 		return 1, nil
 	}
+}
+
+// Find will return the repoDir/NNN-file-name.md for the specified ADR number if it exists in the repoDir
+func (a *ADR) Find(repoDir string, num int) (string, error) {
+	if num > 999 {
+		return "", errors.New("the adr tool does not support 4 digit records, please create a Github issue if you require over a thousand records")
+	}
+	var matches []string
+	err := filepath.WalkDir(repoDir, func(path string, info os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		if matched, err := filepath.Match(fmt.Sprintf("%03d*.md", num), filepath.Base(path)); err != nil {
+			return err
+		} else if matched {
+			matches = append(matches, path)
+		}
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+	// always take the first match... hopefully there's only one
+	return matches[0], nil
+}
+
+// UpdateStatus will search for the Status section and replace the existing status with the 'to' status
+func (a *ADR) UpdateStatus(path, to string) error {
+	r, err := os.Open(path) // closed at end of function
+	if err != nil {
+		return err
+	}
+	w, err := os.Create(path + ".tmp")
+	if err != nil {
+		return err
+	}
+	defer w.Close()
+	scanner := bufio.NewScanner(r)
+	target := false
+	for scanner.Scan() {
+		line := scanner.Text()
+		if target {
+			caser := cases.Title(language.AmericanEnglish)
+			line = caser.String(to)
+			target = false
+		}
+		if line == "## Status" {
+			// our next line should have the status text
+			target = true
+		}
+		_, err := w.WriteString(line + "\n")
+		if err != nil {
+			return err
+		}
+	}
+	err = r.Close()
+	if err != nil {
+		return err
+	}
+	err = os.Rename(path+".tmp", path)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 const (

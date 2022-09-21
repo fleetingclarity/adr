@@ -114,3 +114,50 @@ func Test_TitleSanitizing(t *testing.T) {
 		})
 	}
 }
+
+func Test_FindFileByNumber(t *testing.T) {
+	type test struct {
+		name   string
+		search int
+		files  []string
+		eName  string
+		msg    string
+	}
+	tests := []test{
+		{name: "Find simple only one match, first file", search: 1, files: []string{"001-first.md", "002-second.md"}, eName: "001-first.md", msg: "Should find the first file"},
+		{name: "Find simple only one match, second file", search: 2, files: []string{"001-first.md", "002-second.md"}, eName: "002-second.md", msg: "Should find the first file"},
+		{name: "Find when search digit exists more than once, smaller", search: 1, files: []string{"001-first.md", "011-second.md"}, eName: "001-first.md", msg: "Should find the first file"},
+		{name: "Find when search digit exists more than once, larger", search: 11, files: []string{"001-first.md", "011-second.md"}, eName: "011-second.md", msg: "Should find the second file"},
+		{name: "Potential multiple matches", search: 11, files: []string{"011-first.md", "111-second.md"}, eName: "011-first.md", msg: "Should find the first file"},
+		{name: "Same pattern extra digits", search: 10, files: []string{"101-first.md", "010-second.md"}, eName: "010-second.md", msg: "Should find the second file"},
+	}
+	for _, tt := range tests {
+		startDir, workDir, err := setup()
+		assert.NoError(t, err)
+		for i, f := range tt.files {
+			_ = writeAndClose(path.Join(DefaultRepositoryDir, f), fmt.Sprintf("contents for file %d\n", i))
+		}
+		cut := NewDefaultConfig()
+		actual, err := cut.Find(DefaultRepositoryDir, tt.search)
+		assert.NoError(t, err)
+		assert.Equal(t, path.Join(DefaultRepositoryDir, tt.eName), actual)
+		cleanup(startDir, workDir)
+	}
+}
+
+func Test_UpdateStatus(t *testing.T) {
+	startDir, workDir, err := setup()
+	assert.NoError(t, err)
+	expected := "Approved"
+	cut := NewDefaultConfig()
+	repoDir := path.Join(workDir, DefaultRepositoryDir)
+	err = cut.New(repoDir, map[string]string{"Title": "asdf"})
+	assert.NoError(t, err)
+	err = cut.UpdateStatus(repoDir+"/001-asdf.md", expected)
+	assert.NoError(t, err)
+	actualBytes, err := os.ReadFile(path.Join(repoDir, "001-asdf.md"))
+	assert.NoError(t, err)
+	actualContents := string(actualBytes)
+	assert.Contains(t, actualContents, expected, "We should have found the replacement text")
+	cleanup(startDir, workDir)
+}
