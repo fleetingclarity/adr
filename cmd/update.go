@@ -16,9 +16,9 @@ limitations under the License.
 package cmd
 
 import (
-	"strconv"
-
+	conf "github.com/fleetingclarity/adr/config"
 	"github.com/spf13/cobra"
+	"strconv"
 )
 
 // updateCmd represents the update command
@@ -34,9 +34,9 @@ var updateCmd = &cobra.Command{
 		if verbose {
 			cmd.Println("Updato potato")
 		}
-		a, err := config.Find(config.Repository.Path, n)
+		a, err := conf.Find(config.Repository.Path, n)
 		cobra.CheckErr(err)
-		err = config.UpdateStatus(a, s)
+		err = conf.UpdateStatus(a, s)
 		cobra.CheckErr(err)
 		cmd.Printf("%s status updated to %s\n", a, s)
 	},

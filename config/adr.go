@@ -27,27 +27,23 @@ type ADR struct {
 	BodyTemplate  string
 }
 
-func (a *ADR) Name() string {
-	return a.FormatName
-}
-
 // New will create a new ADR using the in-memory configuration. It will determine the
 // next number for the new ADR and write a new file to repoDir
 func (a *ADR) New(repoDir string, values map[string]string) error {
 	// 1. determine next number and pad with 0s
-	n, err := a.next(repoDir)
+	n, err := next(repoDir)
 	if err != nil {
 		return err
 	}
 	ns := fmt.Sprintf("%03d", n)
-	values["Title"] = a.Sanitize(values["Title"])
+	values["Title"] = Sanitize(values["Title"])
 	values["Number"] = ns
 	values["Date"] = fmt.Sprintf("%v-%v-%v", time.Now().Year(), time.Now().Month(), time.Now().Day())
 	// 2. create go template
 	t := template.New(fmt.Sprintf("%s-adr", a.FormatName))
 	// 3. use title template to create new file
 	tt, err := t.Parse(a.TitleTemplate)
-	f, err := a.titledFile(tt, repoDir, values)
+	f, err := titledFile(tt, repoDir, values)
 	defer f.Close()
 	if err != nil {
 		return err
@@ -62,7 +58,7 @@ func (a *ADR) New(repoDir string, values map[string]string) error {
 }
 
 // Sanitize ensures that the given string matches Title expectations (e.g. lowercase, no spaces, etc)
-func (a *ADR) Sanitize(title string) string {
+func Sanitize(title string) string {
 	if title == "" {
 		return "no-title-given"
 	}
@@ -80,7 +76,7 @@ func (a *ADR) Sanitize(title string) string {
 	}, title)
 }
 
-func (a *ADR) titledFile(t *template.Template, repoDir string, v map[string]string) (io.WriteCloser, error) {
+func titledFile(t *template.Template, repoDir string, v map[string]string) (io.WriteCloser, error) {
 	pathBuffer := bytes.NewBufferString("")
 	err := t.Execute(pathBuffer, v)
 	if err != nil {
@@ -93,7 +89,7 @@ func (a *ADR) titledFile(t *template.Template, repoDir string, v map[string]stri
 	return f, err
 }
 
-func (a *ADR) next(dir string) (int, error) {
+func next(dir string) (int, error) {
 	var matches []string
 	err := filepath.WalkDir(dir, func(path string, info os.DirEntry, err error) error {
 		if err != nil {
@@ -129,7 +125,7 @@ func (a *ADR) next(dir string) (int, error) {
 }
 
 // Find will return the repoDir/NNN-file-name.md for the specified ADR number if it exists in the repoDir
-func (a *ADR) Find(repoDir string, num int) (string, error) {
+func Find(repoDir string, num int) (string, error) {
 	if num > 999 {
 		return "", errors.New("the adr tool does not support 4 digit records, please create a Github issue if you require over a thousand records")
 	}
@@ -156,7 +152,7 @@ func (a *ADR) Find(repoDir string, num int) (string, error) {
 }
 
 // UpdateStatus will search for the Status section and replace the existing status with the 'to' status
-func (a *ADR) UpdateStatus(path, to string) error {
+func UpdateStatus(path, to string) error {
 	r, err := os.Open(path) // closed at end of function
 	if err != nil {
 		return err
@@ -167,7 +163,7 @@ func (a *ADR) UpdateStatus(path, to string) error {
 	}
 	defer w.Close()
 	scanner := bufio.NewScanner(r)
-	err = a.replaceSectionContent(scanner, w, "Status", to)
+	err = replaceSectionContent(scanner, w, "Status", to)
 	if err != nil {
 		return err
 	}
@@ -183,7 +179,7 @@ func (a *ADR) UpdateStatus(path, to string) error {
 }
 
 // replaceSectionContent will find the identified section if it exists and replace all content until the following section
-func (a *ADR) replaceSectionContent(scanner *bufio.Scanner, wc io.WriteCloser, sectionPattern string, replacement string) error {
+func replaceSectionContent(scanner *bufio.Scanner, wc io.WriteCloser, sectionPattern string, replacement string) error {
 	newSection := "## "
 	inSection := false
 	replacementWritten := false
@@ -215,7 +211,7 @@ func (a *ADR) replaceSectionContent(scanner *bufio.Scanner, wc io.WriteCloser, s
 }
 
 // appendToSection will insert content just before the section following the identified section
-func (a *ADR) appendToSection(scanner *bufio.Scanner, wc io.WriteCloser, sectionPattern string, newContent string) error {
+func appendToSection(scanner *bufio.Scanner, wc io.WriteCloser, sectionPattern string, newContent string) error {
 	newSection := "## "
 	inSection := false
 	appended := false
@@ -250,11 +246,11 @@ type LinkPair struct {
 
 // Link will use the LinkPair to insert links into the 'Status' section
 func (a *ADR) Link(p *LinkPair) error {
-	sp, err := a.Find(p.RepoDir, p.SourceNum)
+	sp, err := Find(p.RepoDir, p.SourceNum)
 	if err != nil {
 		return err
 	}
-	tp, err := a.Find(p.RepoDir, p.TargetNum)
+	tp, err := Find(p.RepoDir, p.TargetNum)
 	if err != nil {
 		return err
 	}
@@ -278,7 +274,7 @@ func (a *ADR) appendForLink(path, newContent string) error {
 	}
 	scanner := bufio.NewScanner(f)
 	wc, err := os.Create(path + ".tmp")
-	err = a.appendToSection(scanner, wc, "Status", newContent)
+	err = appendToSection(scanner, wc, "Status", newContent)
 	if err != nil {
 		return err
 	}

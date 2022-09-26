@@ -73,8 +73,8 @@ func Test_NumberIdentification(t *testing.T) {
 			}
 			v := make(map[string]string)
 			v["Title"] = "test-title"
-			cut := NewDefaultConfig().ADR
-			err = cut.New(path.Join(workDir, DefaultRepositoryDir), v)
+			sut := NewDefaultConfig().ADR
+			err = sut.New(path.Join(workDir, DefaultRepositoryDir), v)
 			assert.NoError(t, err)
 			var files []string
 			filepath.WalkDir(path.Join(workDir, DefaultRepositoryDir), func(s string, d fs.DirEntry, e error) error {
@@ -108,8 +108,7 @@ func Test_TitleSanitizing(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cut := NewDefaultConfig()
-			actual := cut.Sanitize(tt.in)
+			actual := Sanitize(tt.in)
 			assert.Equal(t, tt.expected, actual, tt.msg)
 		})
 	}
@@ -137,8 +136,7 @@ func Test_FindFileByNumber(t *testing.T) {
 		for i, f := range tt.files {
 			_ = writeAndClose(path.Join(DefaultRepositoryDir, f), fmt.Sprintf("contents for file %d\n", i))
 		}
-		cut := NewDefaultConfig()
-		actual, err := cut.Find(DefaultRepositoryDir, tt.search)
+		actual, err := Find(DefaultRepositoryDir, tt.search)
 		assert.NoError(t, err)
 		assert.Equal(t, path.Join(DefaultRepositoryDir, tt.eName), actual)
 		cleanup(startDir, workDir)
@@ -149,11 +147,11 @@ func Test_UpdateStatus(t *testing.T) {
 	startDir, workDir, err := setup()
 	assert.NoError(t, err)
 	expected := "Approved"
-	cut := NewDefaultConfig()
+	sut := NewDefaultConfig()
 	repoDir := path.Join(workDir, DefaultRepositoryDir)
-	err = cut.New(repoDir, map[string]string{"Title": "asdf"})
+	err = sut.New(repoDir, map[string]string{"Title": "asdf"})
 	assert.NoError(t, err)
-	err = cut.UpdateStatus(repoDir+"/001-asdf.md", expected)
+	err = UpdateStatus(repoDir+"/001-asdf.md", expected)
 	assert.NoError(t, err)
 	actualBytes, err := os.ReadFile(path.Join(repoDir, "001-asdf.md"))
 	assert.NoError(t, err)

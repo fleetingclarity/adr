@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"fmt"
+	conf "github.com/fleetingclarity/adr/config"
 	"github.com/spf13/cobra"
 	"path"
 )
@@ -37,7 +38,7 @@ Results in: A file in your repo appropriately numbered like 'NNN-some-title.md'`
 		m := make(map[string]string)
 		m["Title"] = args[0]
 		if verbose {
-			fmt.Printf("Your title '%s' will be converted to '%s'\n", args[0], config.Sanitize(args[0]))
+			fmt.Printf("Your title '%s' will be converted to '%s'\n", args[0], conf.Sanitize(args[0]))
 		}
 		cobra.CheckErr(config.New(config.Repository.Path, m))
 		fmt.Printf("Success! Edit your new ADR at %s\n", path.Join(config.WorkingDirectory, config.Repository.Path))
