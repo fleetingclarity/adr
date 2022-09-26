@@ -159,5 +159,6 @@ func Test_UpdateStatus(t *testing.T) {
 	assert.NoError(t, err)
 	actualContents := string(actualBytes)
 	assert.Contains(t, actualContents, expected, "We should have found the replacement text")
+	//fmt.Println(actualContents)
 	cleanup(startDir, workDir)
 }

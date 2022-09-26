@@ -19,7 +19,7 @@ There are 3 location-based scenarios where you may want to manage ADRs:
 
 - [x] Create a new ADR based on the Nygard format
 - [x] Store configuration per ADR repository
-- [ ] Link an ADR to another ADR within the same repository
+- [x] Link an ADR to another ADR within the same repository (and back)
 - [ ] Supersede an existing ADR with another ADR
 - [x] Update the status of an existing ADR
 - [x] Configure custom directory where ADRs are maintained

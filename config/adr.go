@@ -167,27 +167,122 @@ func (a *ADR) UpdateStatus(path, to string) error {
 	}
 	defer w.Close()
 	scanner := bufio.NewScanner(r)
-	target := false
-	for scanner.Scan() {
-		line := scanner.Text()
-		if target {
-			caser := cases.Title(language.AmericanEnglish)
-			line = caser.String(to)
-			target = false
-		}
-		if line == "## Status" {
-			// our next line should have the status text
-			target = true
-		}
-		_, err := w.WriteString(line + "\n")
-		if err != nil {
-			return err
-		}
+	err = a.replaceSectionContent(scanner, w, "Status", to)
+	if err != nil {
+		return err
 	}
 	err = r.Close()
 	if err != nil {
 		return err
 	}
+	err = os.Rename(path+".tmp", path)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// replaceSectionContent will find the identified section if it exists and replace all content until the following section
+func (a *ADR) replaceSectionContent(scanner *bufio.Scanner, wc io.WriteCloser, sectionPattern string, replacement string) error {
+	newSection := "## "
+	inSection := false
+	replacementWritten := false
+	defer wc.Close()
+	for scanner.Scan() {
+		line := scanner.Text()
+		if inSection && replacementWritten && strings.Contains(line, newSection) {
+			inSection = false
+		}
+		if inSection && replacementWritten {
+			line = ""
+		}
+		if inSection && !replacementWritten {
+			caser := cases.Title(language.AmericanEnglish)
+			line = caser.String(replacement)
+			replacementWritten = true
+		}
+		if line == newSection+sectionPattern {
+			// our next line should be what we're looking to replace
+			inSection = true
+		}
+		b := []byte(line + "\n")
+		_, err := wc.Write(b)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// appendToSection will insert content just before the section following the identified section
+func (a *ADR) appendToSection(scanner *bufio.Scanner, wc io.WriteCloser, sectionPattern string, newContent string) error {
+	newSection := "## "
+	inSection := false
+	appended := false
+	defer wc.Close()
+	for scanner.Scan() {
+		line := scanner.Text()
+		if inSection && !appended && strings.Contains(line, newSection) {
+			line = newContent + "\n" + line
+			inSection = false
+			appended = true
+		}
+		if line == newSection+sectionPattern {
+			// we're in the section, now just need to identify the start of the next section to enable insert
+			inSection = true
+		}
+		b := []byte(line + "\n")
+		_, err := wc.Write(b)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+type LinkPair struct {
+	SourceNum int
+	TargetNum int
+	SourceMsg string
+	BackMsg   string
+	RepoDir   string
+}
+
+// Link will use the LinkPair to insert links into the 'Status' section
+func (a *ADR) Link(p *LinkPair) error {
+	sp, err := a.Find(p.RepoDir, p.SourceNum)
+	if err != nil {
+		return err
+	}
+	tp, err := a.Find(p.RepoDir, p.TargetNum)
+	if err != nil {
+		return err
+	}
+	sbase := path.Base(sp)
+	tbase := path.Base(tp)
+	err = a.appendForLink(sp, fmt.Sprintf("[Links to %s: %s](./%s)", sbase, p.SourceMsg, tbase))
+	if err != nil {
+		return err
+	}
+	err = a.appendForLink(tp, fmt.Sprintf("[Links to %s: %s](./%s)", tbase, p.BackMsg, sbase))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *ADR) appendForLink(path, newContent string) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	scanner := bufio.NewScanner(f)
+	wc, err := os.Create(path + ".tmp")
+	err = a.appendToSection(scanner, wc, "Status", newContent)
+	if err != nil {
+		return err
+	}
+	f.Close()
 	err = os.Rename(path+".tmp", path)
 	if err != nil {
 		return err
