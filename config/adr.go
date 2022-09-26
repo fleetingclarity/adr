@@ -267,6 +267,71 @@ func Link(p *LinkPair) error {
 	return nil
 }
 
+// Supersede will change the Source status to 'Superseded' and link to the Target. It will also append the
+// 'Supersedes' backlink to the Target status
+func Supersede(p *LinkPair) error {
+	sp, err := Find(p.RepoDir, p.SourceNum)
+	if err != nil {
+		return err
+	}
+	tp, err := Find(p.RepoDir, p.TargetNum)
+	if err != nil {
+		return err
+	}
+	tFile, err := os.Open(tp)
+	if err != nil {
+		return err
+	}
+	tWC, err := os.Create(tp + ".tmp")
+	if err != nil {
+		return err
+	}
+	sbase := path.Base(sp)
+	tbase := path.Base(tp)
+	var smsg, tmsg string
+	if len(p.SourceMsg) > 0 {
+		smsg = ": " + p.SourceMsg
+	}
+	if len(p.BackMsg) > 0 {
+		tmsg = ": " + p.BackMsg
+	}
+	err = UpdateStatus(sp, "Superseded")
+	if err != nil {
+		return err
+	}
+	sFile, err := os.Open(sp)
+	if err != nil {
+		return err
+	}
+	sWC, err := os.Create(sp + ".tmp")
+	if err != nil {
+		return err
+	}
+	sScanner := bufio.NewScanner(sFile)
+	err = appendToSection(sScanner, sWC, "Status", fmt.Sprintf("[Superseded by %s%s](./%s)", tbase, smsg, tbase))
+	if err != nil {
+		_ = sFile.Close()
+		return err
+	}
+	_ = sFile.Close()
+	err = os.Rename(sp+".tmp", sp)
+	if err != nil {
+		return err
+	}
+	tScanner := bufio.NewScanner(tFile)
+	err = appendToSection(tScanner, tWC, "Status", fmt.Sprintf("[Supersedes %s%s](./%s)", sbase, tmsg, sbase))
+	if err != nil {
+		_ = tFile.Close()
+		return err
+	}
+	_ = tFile.Close()
+	err = os.Rename(tp+".tmp", tp)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func appendForLink(path, newContent string) error {
 	f, err := os.Open(path)
 	if err != nil {

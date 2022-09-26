@@ -160,3 +160,37 @@ func Test_UpdateStatus(t *testing.T) {
 	//fmt.Println(actualContents)
 	cleanup(startDir, workDir)
 }
+
+func Test_Supersede(t *testing.T) {
+	startDir, workDir, err := setup()
+	handleHarnessErr(t, err)
+	c := NewDefaultConfig()
+	repoDir := path.Join(workDir, DefaultRepositoryDir)
+	err = c.New(repoDir, map[string]string{"Title": "first"})
+	handleHarnessErr(t, err)
+	err = c.New(repoDir, map[string]string{"Title": "second"})
+	handleHarnessErr(t, err)
+	// begin test
+	lp := &LinkPair{
+		SourceNum: 1,
+		TargetNum: 2,
+		SourceMsg: "some note",
+		BackMsg:   "quick something",
+		RepoDir:   repoDir,
+	}
+	err = Supersede(lp)
+	assert.NoError(t, err)
+	supersededBytes, err := os.ReadFile(path.Join(DefaultRepositoryDir, "001-first.md"))
+	supersededContents := string(supersededBytes)
+	assert.Contains(t, supersededContents, ": "+lp.SourceMsg, "simple sanity check failed, we should see our msg in the superseded file")
+	targetBytes, err := os.ReadFile(path.Join(DefaultRepositoryDir, "002-second.md"))
+	targetContents := string(targetBytes)
+	assert.Contains(t, targetContents, ": "+lp.BackMsg, "simple sanity check failed, we should see our back message in the superseding file")
+	cleanup(startDir, workDir)
+}
+
+func handleHarnessErr(t *testing.T, e error) {
+	if e != nil {
+		t.Fatal(e)
+	}
+}
