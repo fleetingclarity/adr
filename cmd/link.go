@@ -44,7 +44,7 @@ Example: adr link 182 "Amends some important thing" 10 "Important thing is amend
 			BackMsg:   args[3],
 			RepoDir:   config.Repository.Path,
 		}
-		err = config.Link(lp)
+		err = conf.Link(lp)
 		cobra.CheckErr(err)
 	},
 }

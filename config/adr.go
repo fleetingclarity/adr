@@ -245,7 +245,7 @@ type LinkPair struct {
 }
 
 // Link will use the LinkPair to insert links into the 'Status' section
-func (a *ADR) Link(p *LinkPair) error {
+func Link(p *LinkPair) error {
 	sp, err := Find(p.RepoDir, p.SourceNum)
 	if err != nil {
 		return err
@@ -256,18 +256,18 @@ func (a *ADR) Link(p *LinkPair) error {
 	}
 	sbase := path.Base(sp)
 	tbase := path.Base(tp)
-	err = a.appendForLink(sp, fmt.Sprintf("[Links to %s: %s](./%s)", sbase, p.SourceMsg, tbase))
+	err = appendForLink(sp, fmt.Sprintf("[Links to %s: %s](./%s)", sbase, p.SourceMsg, tbase))
 	if err != nil {
 		return err
 	}
-	err = a.appendForLink(tp, fmt.Sprintf("[Links to %s: %s](./%s)", tbase, p.BackMsg, sbase))
+	err = appendForLink(tp, fmt.Sprintf("[Links to %s: %s](./%s)", tbase, p.BackMsg, sbase))
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (a *ADR) appendForLink(path, newContent string) error {
+func appendForLink(path, newContent string) error {
 	f, err := os.Open(path)
 	if err != nil {
 		return err
