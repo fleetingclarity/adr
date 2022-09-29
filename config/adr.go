@@ -22,7 +22,6 @@ import (
 
 type ADR struct {
 	FormatName    string
-	Sections      []string
 	TitleTemplate string
 	BodyTemplate  string
 }

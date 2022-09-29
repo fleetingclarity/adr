@@ -81,7 +81,6 @@ func NewDefaultConfig() *Config {
 		},
 		ADR: &ADR{
 			FormatName:    "Nygard",
-			Sections:      []string{"title", "date", "status", "context", "decision", "consequences"},
 			TitleTemplate: defaultTitleTemplate,
 			BodyTemplate:  defaultBodyTemplate,
 		},
