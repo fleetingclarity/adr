@@ -147,6 +147,9 @@ func Find(repoDir string, num int) (string, error) {
 		return "", err
 	}
 	// always take the first match... hopefully there's only one
+	if len(matches) < 1 {
+		return "", errors.New(fmt.Sprintf("no file with number '%03d' found", num))
+	}
 	return matches[0], nil
 }
 
