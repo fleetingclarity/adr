@@ -12,9 +12,9 @@ A tool for managing Architectural/Any Decision Records (ADRs). This tool will en
    2. Superseding, a special case of linking
 
 ## Features under consideration
-- Initialize w/ first decision to record decisions
-- More pre-defined ADR formats from which to choose
-- Status enforcement (e.g. choose from predefined list)
-- Lint ADRs (e.g. ensure title fits the format, required sections present, etc)
-- Default global init values for folks managing multiple repos (used when initializing the repo)
-- Reports (e.g. status ratios, lead time from proposal to acceptance, etc)
+1. Status enforcement (e.g. choose from predefined list)
+2. Lint ADRs (e.g. ensure title fits the format, required sections present, etc)
+3. Initialize w/ first decision to record decisions
+4. More pre-defined ADR formats from which to choose
+5. global init values for folks managing multiple repos (used when initializing the repo)
+6. (e.g. status ratios, lead time from proposal to acceptance, etc)
