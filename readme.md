@@ -12,6 +12,7 @@ A tool for managing Architectural/Any Decision Records (ADRs). This tool will en
    2. Superseding, a special case of linking
 
 ## Features under consideration
+- Initialize w/ first decision to record decisions
 - More pre-defined ADR formats from which to choose
 - Status enforcement (e.g. choose from predefined list)
 - Lint ADRs (e.g. ensure title fits the format, required sections present, etc)
